@@ -1,0 +1,75 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Search</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    </head>
+    <body>
+        {% include 'navbar.html' %}
+        <div class="container">
+            <h1>Search Users</h1>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username" name="username">
+            </div>
+            <button class="btn btn-primary" onclick="searchUser()">Search</button>
+        </div>
+
+        <script>
+            async function searchUser() {
+                const username = document.getElementById('username').value;
+
+                const data = {
+                    username: username
+                };
+
+                try {
+                    const response = await fetch('/api/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        // Handle successful response
+                        const results = await response.json();
+                        // Update the UI with the search results (example)
+                        displayResults(results);
+                    } else {
+                        // Handle error response
+                        console.error('Error:', response.status);
+                        alert('An error occurred during the search.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred during the search.');
+                }
+            }
+
+            function displayResults(results) {
+                // Example: Display results in a list
+                const resultsContainer = document.getElementById('results-container'); // Add this element to your HTML
+                if (!resultsContainer) return; // Make sure the element exists
+
+                resultsContainer.innerHTML = ''; // Clear previous results
+
+                if (results && results.length > 0) {
+                    const list = document.createElement('ul');
+                    results.forEach(user => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = user.username; // Assuming 'username' is a property of the user object
+                        list.appendChild(listItem);
+                    });
+                    resultsContainer.appendChild(list);
+                } else {
+                    const message = document.createElement('p');
+                    message.textContent = 'No results found.';
+                    resultsContainer.appendChild(message);
+                }
+            }
+        </script>
+        <div id="results-container"></div> <!-- Add this to display results -->
+    </body>
+    </html>

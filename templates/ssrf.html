@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSRF Test</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>SSRF Test</h1>
+        <div class="form-group">
+            <label for="url">URL:</label>
+            <input type="text" class="form-control" id="url" name="url">
+        </div>
+        <button class="btn btn-primary" onclick="testSSRF()">Test SSRF</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testSSRF() {
+            const url = document.getElementById('url').value;
+
+            try {
+                const response = await fetch('/api/ssrf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url }) // Send URL as JSON
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('result').innerText = data.content;
+                } else {
+                    const errorData = await response.json();
+                    document.getElementById('result').innerText = `Error: ${errorData.detail}`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerText = `Error: ${error}`;
+            }
+        }
+    </script>
+</body>
+</html>

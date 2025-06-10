@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSRF Test</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>SSRF Test</h1>
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <div class="form-group">
+            <label for="url">URL:</label>
+            <input type="text" class="form-control" id="url" name="url">
+        </div>
+        <button class="btn btn-primary" onclick="testSSRF()">Test SSRF</button>
+
+        {% if content %}
+            <h2>Content:</h2>
+            <pre>{{ content }}</pre>
+        {% endif %}
+    </div>
+
+    <script>
+        async function testSSRF() {
+            const url = document.getElementById('url').value;
+
+            try {
+                const response = await fetch('/ssrf?url=' + encodeURIComponent(url), {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload(); // Refresh the page to show the content
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during the SSRF test.');
+            }
+        }
+    </script>
+</body>
+</html>

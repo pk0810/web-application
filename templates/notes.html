@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notes</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>Notes</h1>
+        <div class="form-group">
+            <label for="note">Add a Note:</label>
+            <textarea class="form-control" id="note" name="note"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="addNote()">Add Note</button>
+
+        <h2>My Notes:</h2>
+        <ul>
+            {% for note in notes %}
+                <li>{{ note.content }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        async function addNote() {
+            const note = document.getElementById('note').value;
+
+            const data = {
+                note: note
+            };
+
+            try {
+                const response = await fetch('/notes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload(); // Refresh the page to show the new note
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while adding the note.');
+            }
+        }
+    </script>
+</body>
+</html>

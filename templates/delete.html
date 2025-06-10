@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Files</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>Delete Files</h1>
+        <h2>Uploaded Files:</h2>
+        <ul>
+            {% for upload in uploads %}
+                <li>
+                    <a href="/download/{{ upload.id }}">{{ upload.filename }}</a>
+                    - <a href="#" onclick="deleteFile({{ upload.id }})">Delete</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        function deleteFile(fileId) {
+            if (confirm("Are you sure you want to delete this file?")) {
+                window.location.href = '/delete/' + fileId;
+            }
+        }
+    </script>
+</body>
+</html>
