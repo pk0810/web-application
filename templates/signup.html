@@ -3,22 +3,61 @@
 <head>
     <title>Sign Up</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script>
+        async function signup(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    // Redirect on success
+                    window.location.href = '/login'; // Redirect to login page
+                } else {
+                    const errorData = await response.json();
+                    displayErrors(errorData.detail); // Display error messages
+                }
+            } catch (error) {
+                alert('Signup error: ' + error.message);
+            }
+        }
+
+        function displayErrors(errors) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = ''; // Clear previous errors
+            errors.forEach(error => {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger';
+                errorDiv.innerText = error;
+                errorContainer.appendChild(errorDiv);
+            });
+        }
+    </script>
 </head>
 <body>
     {% include 'navbar.html' %}
     <div class="container">
         <h1>Sign Up</h1>
-        {% if error %}
-            <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
-        {% if errors %}
-            <div class="alert alert-danger">
-                {% for error in errors %}
-                    {{ error }}<br>
-                {% endfor %}
-            </div>
-        {% endif %}
-        <form method="post" action="/signup">
+        <div id="error-container">
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            {% if errors %}
+                <div class="alert alert-danger">
+                    {% for error in errors %}
+                        {{ error }}<br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <form onsubmit="signup(event)">
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" class="form-control" id="username" name="username" required>
