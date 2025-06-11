@@ -3,71 +3,69 @@
 <head>
     <title>Sign Up</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script>
-        async function signup(event) {
-            event.preventDefault(); // Prevent the default form submission
+</head>
+<body>
+    <div class="container">
+        <h1>Sign Up</h1>
+        <div id="error-container" class="alert alert-danger" style="display: none;"></div>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <button class="btn btn-primary" onclick="signup()">Sign Up</button>
+        <p>Already have an account? <a href="/login">Log In</a></p>
+    </div>
 
+    <script>
+        async function signup() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+
+            // Basic client-side validation
+            if (!username || !password) {
+                displayError("Username and password are required.");
+                return;
+            }
+
+            const data = {
+                username: username,
+                password: password
+            };
 
             try {
                 const response = await fetch('/signup', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
                 });
 
-                if (response.ok) {
-                    // Redirect on success
-                    window.location.href = '/login'; // Redirect to login page
+                if (response.redirected) {
+                    window.location.href = response.url;
                 } else {
-                    const errorData = await response.json();
-                    displayErrors(errorData.detail); // Display error messages
+                    const responseData = await response.json();
+                    if (responseData.detail) {
+                        displayError(responseData.detail.join(", ")); // Display error messages
+                    } else {
+                        displayError("Signup failed.");
+                    }
                 }
             } catch (error) {
-                alert('Signup error: ' + error.message);
+                console.error('Error:', error);
+                displayError('An error occurred during signup.');
             }
         }
 
-        function displayErrors(errors) {
+        function displayError(message) {
             const errorContainer = document.getElementById('error-container');
-            errorContainer.innerHTML = ''; // Clear previous errors
-            errors.forEach(error => {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger';
-                errorDiv.innerText = error;
-                errorContainer.appendChild(errorDiv);
-            });
+            errorContainer.innerText = message;
+            errorContainer.style.display = 'block'; // Show the error container
         }
     </script>
-</head>
-<body>
-    {% include 'navbar.html' %}
-    <div class="container">
-        <h1>Sign Up</h1>
-        <div id="error-container">
-            {% if error %}
-                <div class="alert alert-danger">{{ error }}</div>
-            {% endif %}
-            {% if errors %}
-                <div class="alert alert-danger">
-                    {% for error in errors %}
-                        {{ error }}<br>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-        <form onsubmit="signup(event)">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Sign Up</button>
-        </form>
-    </div>
 </body>
 </html>
