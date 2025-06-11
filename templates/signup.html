@@ -5,53 +5,63 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
+    {% include 'navbar.html' %}
     <div class="container">
         <h1>Sign Up</h1>
         <div id="error-container" class="alert alert-danger" style="display: none;"></div>
-        <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" class="form-control" id="username" name="username" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" class="form-control" id="password" name="password" required>
-        </div>
-        <button class="btn btn-primary" onclick="signup()">Sign Up</button>
+        <form id="signup-form" method="post" action="/signup" onsubmit="return signup(event);">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign Up</button>
+        </form>
         <p>Already have an account? <a href="/login">Log In</a></p>
     </div>
 
     <script>
-        async function signup() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+        async function signup(event) {
+            event.preventDefault(); // Prevent the default form submission
 
-    const data = { username, password };
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-    try {
-        const response = await fetch('/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+            const data = { username, password };
 
-        if (response.redirected) {
-            window.location.href = response.url; // Redirect on success
-        } else {
-            const responseData = await response.json();
-            if (responseData.detail) {
-                // If detail is an array or object, stringify it for readable output
-                let errorMsg = Array.isArray(responseData.detail) ? responseData.detail.join('\n') : JSON.stringify(responseData.detail);
-                alert(errorMsg);
-            } else {
-                alert('Signup failed. Please try again.');
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    // Redirect on success
+                    window.location.href = '/login'; // Redirect to login page
+                } else {
+                    const responseData = await response.json();
+                    displayErrors(responseData.detail); // Display error messages
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayErrors(['An error occurred during signup.']);
             }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('An unexpected error occurred: ' + error.message);
-    }
-}
 
+        function displayErrors(errors) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = ''; // Clear previous errors
+            errors.forEach(error => {
+                const errorDiv = document.createElement('div');
+                errorDiv.innerText = error;
+                errorContainer.appendChild(errorDiv);
+            });
+            errorContainer.style.display = 'block'; // Show the error container
+        }
     </script>
 </body>
 </html>
