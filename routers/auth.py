@@ -8,6 +8,9 @@ from auth import get_current_user, create_access_token, pwd_context
 from models import SignupRequest, LoginRequest
 from templates import templates  # Import templates from main
 from pydantic import ValidationError
+from fastapi.responses import JSONResponse
+
+
 
 router = APIRouter()
 
@@ -17,33 +20,27 @@ def get_signup(request: Request):
     return templates.TemplateResponse("signup.html", {"request": request})
 
 
-
-@router.post("/signup", response_class=HTMLResponse)
-def post_signup(
-    request: Request,
-    body: SignupRequest = Body(...),  # Only JSON, required
-    db: Session = Depends(get_db)
-):
-    from auth import pwd_context
-    from database import User
+@router.post("/signup")
+async def post_signup(body: SignupRequest, db: Session = Depends(get_db)):
     username = body.username
     password = body.password
+
     existing_user = db.query(User).filter(User.username == username).first()
     if existing_user:
-        return templates.TemplateResponse("signup.html", {"request": request, "error": "Username already taken."})
+        return JSONResponse(status_code=400, content={"detail": ["Username already taken."]})
+
     try:
         hashed_password = pwd_context.hash(password)
         user = User(username=username, password=hashed_password)
         db.add(user)
         db.commit()
-        return RedirectResponse(url="/login", status_code=302)
-    except ValidationError as e:
-        errors: List[str] = []
-        for error in e.errors():
-            errors.append(error["msg"])
-        return templates.TemplateResponse("signup.html", {"request": request, "errors": errors})
+        return JSONResponse(status_code=201, content={"detail": ["User created successfully."]})
+    except ValidationError as ve:
+        errors = [error["msg"] for error in ve.errors()]
+        return JSONResponse(status_code=400, content={"detail": errors})
     except Exception as e:
-        return templates.TemplateResponse("signup.html", {"request": request, "error": str(e)})
+        return JSONResponse(status_code=500, content={"detail": [str(e)]})
+
 
 @router.get("/login", response_class=HTMLResponse)
 def get_login(request: Request, reason: str = "", error: str = ""):
