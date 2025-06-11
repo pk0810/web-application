@@ -14,46 +14,122 @@
         {% if error %}
             <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
-        </div>
-        <div class="form-group">
-            <label for="mobile">Mobile:</label>
-            <input type="text" class="form-control" id="mobile" name="mobile" value="{{ user.mobile }}">
-        </div>
-        <button class="btn btn-primary" onclick="updateProfile()">Update Profile</button>
+        <div class="container" style="max-width:400px; margin: auto; padding: 20px;">
+            <h1>Edit Profile</h1>
+            <div>
+                <label>Username (readonly)</label>
+                <input type="text" id="username" value="{{ user.username }}" readonly style="width: 100%;" />
+            </div>
+            <div>
+            <h2 style="margin-top: 30px;">Upload Profile Image</h2>
+            <input type="file" id="profileImageFile" accept="image/*" />
+            <button onclick="uploadProfileImage()">Upload Image</button>
+
+            <div id="message" style="margin-top: 20px; color: green;"></div>
+            <div id="error" style="margin-top: 20px; color: red;"></div>
+
+            <img id="profileImagePreview" src="{{ user.profile_image_url or '/static/default-avatar.png' }}" alt="Profile Image" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 20px;" />
+            </div>
+            <div>
+                <label>Email</label>
+                <input type="email" id="email" value="{{ user.email }}" style="width: 100%;" />
+            </div>
+            <div>
+                <label>Mobile</label>
+                <input type="text" id="mobile" value="{{ user.mobile }}" style="width: 100%;" />
+            </div>
+            <button onclick="saveProfile()" style="margin-top: 10px;">Save Profile</button>
     </div>
 
-    <script>
-        async function updateProfile() {
-            const email = document.getElementById('email').value;
-            const mobile = document.getElementById('mobile').value;
+<script>
+document.addEventListener('DOMContentLoaded', loadProfile);
 
-            const data = {
-                email: email,
-                mobile: mobile
-            };
-
-            try {
-                const response = await fetch('/profile', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.redirected) {
-                    window.location.href = response.url;
-                } else {
-                    window.location.reload(); // Refresh the page to show the message
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while updating the profile.');
-            }
+async function loadProfile(){
+    try {
+        const res = await fetch('/profile');
+        if(!res.ok) throw new Error('Failed to load profile.');
+        const data = await res.json();
+        document.getElementById('username').value = data.username || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('mobile').value = data.mobile || '';
+        if(data.profile_image_url){
+            document.getElementById('profileImagePreview').src = data.profile_image_url;
         }
-    </script>
+    } catch (err){
+        showError(err.message);
+    }
+}
+
+async function saveProfile(){
+    clearMessages();
+    const email = document.getElementById('email').value;
+    const mobile = document.getElementById('mobile').value;
+
+    try {
+        const response = await fetch('/profile/edit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email, mobile })
+        });
+
+        if(response.ok){
+            const data = await response.json();
+            showMessage(data.message);
+        } else if(response.status === 422){
+            const data = await response.json();
+            const errors = data.detail.map(err => `${err.loc[1]}: ${err.msg}`);
+            showError(errors.join('\n'));
+        } else {
+            const data = await response.json();
+            showError(data.detail || 'Error updating profile.');
+        }
+    } catch(err){
+        showError('Network error: ' + err.message);
+    }
+}
+
+async function uploadProfileImage(){
+    clearMessages();
+    const fileInput = document.getElementById('profileImageFile');
+    if(fileInput.files.length === 0){
+        showError('Select an image file first.');
+        return;
+    }
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const res = await fetch('/profile/upload-image', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.detail || 'Failed to upload image.');
+        showMessage(data.message || 'Image uploaded.');
+        if(data.profile_image_url){
+            document.getElementById('profileImagePreview').src = data.profile_image_url;
+        }
+    } catch (err){
+        showError(err.message);
+    }
+}
+
+function showMessage(msg) {
+    document.getElementById('message').innerText = msg;
+    document.getElementById('error').innerText = '';
+}
+
+function showError(msg) {
+    document.getElementById('error').innerText = msg;
+    document.getElementById('message').innerText = '';
+}
+
+function clearMessages() {
+    document.getElementById('message').innerText = '';
+    document.getElementById('error').innerText = '';
+}
+</script>
+
 </body>
 </html>
