@@ -34,12 +34,13 @@ async def post_signup(body: SignupRequest, db: Session = Depends(get_db)):
         user = User(username=username, password=hashed_password)
         db.add(user)
         db.commit()
-        return JSONResponse(status_code=201, content={"detail": ["User created successfully."]})
+        return JSONResponse(status_code=201, content={"detail": ["User  created successfully."]})
     except ValidationError as ve:
         errors = [error["msg"] for error in ve.errors()]
         return JSONResponse(status_code=400, content={"detail": errors})
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": [str(e)]})
+
 
 
 @router.get("/login", response_class=HTMLResponse)
