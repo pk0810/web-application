@@ -24,22 +24,20 @@ def get_signup(request: Request):
 async def post_signup(body: SignupRequest, db: Session = Depends(get_db)):
     username = body.username
     password = body.password
-
+    # Run custom validation
+    validation_errors = validate_signup_data(username, password)
+    if validation_errors:
+        # Return errors in a JSON structure similar to Pydantic
+        return JSONResponse(status_code=400, content={"detail": validation_errors})
     existing_user = db.query(User).filter(User.username == username).first()
     if existing_user:
         return JSONResponse(status_code=400, content={"detail": ["Username already taken."]})
-
-    try:
-        hashed_password = pwd_context.hash(password)
-        user = User(username=username, password=hashed_password)
-        db.add(user)
-        db.commit()
-        return JSONResponse(status_code=201, content={"detail": ["User  created successfully."]})
-    except ValidationError as ve:
-        errors = [error["msg"] for error in ve.errors()]
-        return JSONResponse(status_code=400, content={"detail": errors})
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"detail": [str(e)]})
+    # If validations pass, proceed with user creation
+    hashed_password = pwd_context.hash(password)
+    user = User(username=username, password=hashed_password)
+    db.add(user)
+    db.commit()
+    return RedirectResponse(url="/login", status_code=302)
 
 
 
