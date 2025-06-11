@@ -22,50 +22,36 @@
 
     <script>
         async function signup() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
-            // Basic client-side validation
-            if (!username || !password) {
-                displayError("Username and password are required.");
-                return;
-            }
+    const data = { username, password };
 
-            const data = {
-                username: username,
-                password: password
-            };
+    try {
+        const response = await fetch('/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
 
-            try {
-                const response = await fetch('/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.redirected) {
-                    window.location.href = response.url;
-                } else {
-                    const responseData = await response.json();
-                    if (responseData.detail) {
-                        displayError(responseData.detail.join(", ")); // Display error messages
-                    } else {
-                        displayError("Signup failed.");
-                    }
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                displayError('An error occurred during signup.');
+        if (response.redirected) {
+            window.location.href = response.url; // Redirect on success
+        } else {
+            const responseData = await response.json();
+            if (responseData.detail) {
+                // If detail is an array or object, stringify it for readable output
+                let errorMsg = Array.isArray(responseData.detail) ? responseData.detail.join('\n') : JSON.stringify(responseData.detail);
+                alert(errorMsg);
+            } else {
+                alert('Signup failed. Please try again.');
             }
         }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An unexpected error occurred: ' + error.message);
+    }
+}
 
-        function displayError(message) {
-            const errorContainer = document.getElementById('error-container');
-            errorContainer.innerText = message;
-            errorContainer.style.display = 'block'; // Show the error container
-        }
     </script>
 </body>
 </html>
